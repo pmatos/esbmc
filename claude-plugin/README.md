@@ -31,7 +31,45 @@ If the formula is satisfiable, a bug exists (with a counterexample); if unsatisf
 From within Claude Code, add the marketplace and install the plugin:
 
 ```
-/plugin marketplace add esbmc/esbmc
+/plugin marketplace add https://github.com/esbmc/esbmc.git
+/plugin install esbmc-plugin@esbmc-marketplace
+```
+
+> **Note:** Always use the full HTTPS URL as shown above. The shorthand
+> `esbmc/esbmc` may attempt SSH authentication, which fails without
+> configured SSH keys.
+
+### Troubleshooting Installation on macOS
+
+The ESBMC repository is large (~20,000 files) and Claude Code's
+marketplace system performs a full git clone. On macOS, the system memory
+manager may kill the clone process, producing an error like:
+
+```
+error: submodule died of signal 9
+```
+
+This is not a submodule issue -- macOS terminated the git process due to
+memory pressure. To work around this, use the provided install script
+which performs a lightweight shallow + sparse clone:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/esbmc/esbmc/master/claude-plugin/scripts/install-marketplace.sh | bash
+```
+
+Or clone the script manually:
+
+```bash
+git clone --depth 1 --filter=blob:none --sparse \
+    https://github.com/esbmc/esbmc.git \
+    ~/.claude/plugins/marketplaces/esbmc-marketplace
+cd ~/.claude/plugins/marketplaces/esbmc-marketplace
+git sparse-checkout set .claude-plugin claude-plugin
+```
+
+Then install the plugin normally in Claude Code:
+
+```
 /plugin install esbmc-plugin@esbmc-marketplace
 ```
 
