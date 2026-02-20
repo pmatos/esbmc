@@ -103,7 +103,7 @@ Each PR includes pass + fail regression tests. Format: `test.desc` with `CORE`, 
 
 ## PR Structure (5 PRs)
 
-### PR 1: Foundation
+### PR 1: Foundation — COMPLETE
 
 **Scope:** Model skeleton + preprocessor rewriting + parser changes + Hypothesis infra
 
@@ -116,6 +116,10 @@ Each PR includes pass + fail regression tests. Format: `test.desc` with `CORE`, 
 - `regression/python/decimal/`, `regression/python/decimal_fail/`
 
 **Enables:** `Decimal("3.14")` constructs correctly, fields accessible.
+
+**Note:** ESBMC requires attribute access on class instances to go through function
+parameters (`symbol->is_parameter` check in `python_converter.cpp:3404`). Regression
+tests use wrapper functions to work within this constraint.
 
 ### PR 2: Generic Dunder Dispatch + Equality
 
