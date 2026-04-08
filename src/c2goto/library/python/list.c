@@ -795,6 +795,17 @@ bool __ESBMC_list_lt(
       if (av != bv)
         return av < bv;
     }
+    else if (a->size == 1 && type_flag == 3)
+    {
+      // Bool element (1-byte) in a mixed int+float list: promote to double
+      // so the comparison works correctly against 8-byte int/float elements.
+      double av = (double)(*(const uint8_t *)a->value);
+      double bv = (b->type_id == float_type_id) ? *(const double *)b->value
+                  : (b->size == 1) ? (double)(*(const uint8_t *)b->value)
+                                   : (double)(*(const int64_t *)b->value);
+      if (av != bv)
+        return av < bv;
+    }
     else if (a->size == 1)
     {
       uint8_t av = *(const uint8_t *)a->value;

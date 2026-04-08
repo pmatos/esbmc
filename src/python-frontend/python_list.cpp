@@ -2322,11 +2322,17 @@ exprt python_list::compare(
       type_flag = 0;
 
     // Emit: lt_ret = __ESBMC_list_lt(a, b, type_flag, float_type_id)
-    // Derivations (total order):
+    // Derivations (assumes total order on elements):
     //   Lt  : list_lt(l1, l2) == true   → no swap, check true
     //   LtE : !list_lt(l2, l1) == true  → swap,    check false
     //   Gt  : list_lt(l2, l1) == true   → swap,    check true
     //   GtE : !list_lt(l1, l2) == true  → no swap, check false
+    //
+    // Known limitation: LtE and GtE use !(b < a) instead of (a < b || a == b).
+    // This is incorrect when elements are not totally ordered (e.g. NaN):
+    //   [nan] <= [1.0] should be False but returns True because both
+    //   list_lt([nan],[1.0]) and list_lt([1.0],[nan]) are False.
+    // Fixing this requires calling both list_lt and list_eq per comparison.
     const bool swap = (op == "LtE" || op == "Gt");
     const symbolt *a_sym = swap ? rhs_symbol : lhs_symbol;
     const symbolt *b_sym = swap ? lhs_symbol : rhs_symbol;
