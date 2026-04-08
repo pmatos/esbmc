@@ -2,7 +2,6 @@
 #include <clang-c-frontend/typecast.h>
 
 #include <cctype>
-#include <iostream>
 #include <sstream>
 #include <string>
 #include <util/std_expr.h>
@@ -72,7 +71,7 @@ void expression_node::output(std::ostream &out) const
   out << value << " <" << kind_to_string(kind) << ">\n";
 
   if (left)
-    node_output(left, out, "", right);
+    node_output(left, out, "", right != nullptr);
 
   if (right)
     node_output(right, out, "", false);

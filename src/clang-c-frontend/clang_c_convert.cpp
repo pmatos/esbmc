@@ -581,11 +581,12 @@ bool clang_c_convertert::get_var(const clang::VarDecl &vd, exprt &new_expr)
       if (
         s &&
         vd.getTemplateSpecializationKind() != clang::TSK_ImplicitInstantiation)
+      {
         // In AST, nodes will be generated for the template Instantiation.
-        // We have already initialized it, so skip it
-
-        // Remove the zero initialization symbol and re-arrange the initialization order
+        // We have already initialized it, so skip it.
+        // Remove the zero initialization symbol and re-arrange the initialization order.
         context.erase_symbol(s->id);
+      }
     }
 
     added_symbol = context.move_symbol_to_context(symbol);
