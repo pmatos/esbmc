@@ -1,0 +1,2 @@
+# CPython differential gate opt-out (scripts/check_python_tests.sh, issue #1).
+# Coverage-instrumentation test (--*-coverage); ESBMC reports FAILED to enumerate coverage obligations while the program runs cleanly under CPython.

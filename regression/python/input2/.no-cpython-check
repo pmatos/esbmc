@@ -1,0 +1,2 @@
+# CPython differential gate opt-out (scripts/check_python_tests.sh, issue #1).
+# Reads stdin via input(); not runnable non-interactively under CPython.

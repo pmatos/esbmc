@@ -1,0 +1,2 @@
+# CPython differential gate opt-out (scripts/check_python_tests.sh, issue #1).
+# Concurrency test; ESBMC explores interleavings CPython cannot reproduce deterministically.
