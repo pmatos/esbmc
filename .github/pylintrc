@@ -1,0 +1,35 @@
+# Pylint configuration for the CI Python-frontend error gate.
+#
+# This file is used ONLY by the `python-pylint` job in
+# .github/workflows/pull_request.yml (via --rcfile). It is intentionally kept
+# out of the repository root so it does not alter the behaviour of other
+# pylint consumers (e.g. Codacy), which lint the full message set.
+#
+# The gate runs `pylint -E` (error/fatal category only) on the Python files a
+# PR changes under src/python-frontend/. The goal is to catch the class of
+# bugs the two-test convention alone cannot — undefined names, wrong argument
+# counts, unexpected keywords — without drowning contributors in style noise.
+
+[MAIN]
+# Vendored third-party sources are not ours to lint.
+ignore-paths=^src/python-frontend/libs/.*$
+
+[MESSAGES CONTROL]
+# Disable the error-category checks whose accuracy depends on inference over
+# imports/values that the lint environment cannot resolve. CI's lint runner
+# deliberately does not install the frontend's optional/runtime dependencies
+# (numpy, torch, ast2json, the CPython stdlib modules the models shadow), and
+# pylint's value inference does not track control-flow narrowing, so these
+# would be false positives:
+#   import-error              (E0401) module not importable in the lint env
+#   no-name-in-module         (E0611) name not found in an unimportable module
+#   no-member                 (E1101) attribute inference on dynamic/absent modules
+#   invalid-unary-operand-type(E1130) unary +/- on a value a preceding
+#                                     `is None` guard has already excluded
+# The high-signal checks the gate exists for — undefined-variable (E0602),
+# wrong argument counts (E1120/E1121), unexpected-keyword-arg (E1123),
+# used-before-assignment (E0601) — remain enabled.
+disable=import-error,
+        no-name-in-module,
+        no-member,
+        invalid-unary-operand-type

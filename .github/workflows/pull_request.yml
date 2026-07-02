@@ -262,6 +262,53 @@ jobs:
           run: git diff --exit-code --ignore-cr-at-eol
           if: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
 
+  # Errors-only pylint gate over the Python files a PR changes under
+  # src/python-frontend/. Complements the YAPF whitespace check above: it
+  # catches the class of bugs formatting cannot (undefined names, wrong
+  # argument counts, unexpected keyword args). Config lives in .github/pylintrc.
+  python-pylint:
+    name: Check Python frontend with pylint (errors)
+    runs-on: ubuntu-slim
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.10'
+      - name: Install pylint
+        # Pinned: `pylint -E` is a hard gate with no per-PR escape hatch, so an
+        # unpinned upgrade that adds/strengthens an error check could turn the
+        # gate red on already-merged, correct code. `~=3.3.0` takes 3.3.x patch
+        # fixes but holds back the 3.4 minor bump (where new checks land) until
+        # it is adopted deliberately and re-verified against the frontend.
+        run: pip install "pylint~=3.3.0"
+      - name: Run pylint (errors only) on changed frontend files
+        shell: bash
+        run: |
+          mapfile -t files < <(
+            git diff --name-only --diff-filter=d "origin/${{ github.base_ref }}...HEAD" -- src/python-frontend |
+            grep -E '\.py$' |
+            grep -v '^src/python-frontend/libs/' || true
+          )
+
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No changed Python frontend files to lint."
+            exit 0
+          fi
+
+          # Lint one file at a time: pylint's module inference emits a spurious
+          # F0001 fatal when a single invocation spans files across package
+          # boundaries (models/numpy/ and models/os/ have no __init__.py).
+          # Per-file invocation avoids that artifact; each file alone is clean.
+          status=0
+          for f in "${files[@]}"; do
+            echo "== pylint $f =="
+            pylint -E --rcfile=.github/pylintrc "$f" || status=1
+          done
+          exit $status
+
   coverage:
     name: Build and upload coverage to Codecov
     runs-on: ubuntu-24.04

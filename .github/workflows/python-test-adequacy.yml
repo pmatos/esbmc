@@ -1,0 +1,37 @@
+name: Python test adequacy
+
+# Enforce the "one passing + one failing regression test per PR" convention
+# (AGENTS.md) for PRs that touch the Python frontend or its C operational
+# models. Apply the `skip-test-check` label to opt out (docs-only / pure
+# refactor).
+#
+# This lives in its own workflow — separate from the heavy build matrix in
+# pull_request.yml — precisely so it can also fire on `labeled`/`unlabeled`.
+# That way, applying `skip-test-check` re-runs *only* this lightweight check
+# (re-evaluating the label-gated `if:` against the now-current labels) and
+# clears a previously-red result, without re-running the whole build matrix.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python-test-adequacy:
+    name: Check Python test adequacy (two-test rule)
+    runs-on: ubuntu-slim
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Require paired passing+failing regression tests
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-test-check') }}
+        shell: bash
+        env:
+          BASE_REF: origin/${{ github.base_ref }}
+        run: scripts/ci/check-python-test-pair.sh
+      - name: Note skipped check
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'skip-test-check') }}
+        run: echo "Skipping two-test adequacy check (skip-test-check label present)."

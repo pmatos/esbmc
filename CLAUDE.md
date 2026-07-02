@@ -68,11 +68,13 @@ ctest -R "regression/esbmc/00_big_endian_01" --output-on-failure
 
 Regression test format (`test.desc`): line 1 is `CORE`/`KNOWNBUG`/`FUTURE`/`THOROUGH` (THOROUGH is Linux-only), line 2 is the source file, line 3 is ESBMC flags, line 4+ are expected output regexes. Every PR should include at least two regression tests (one passing, one failing).
 
+**CI enforces the two-test rule for the Python frontend.** The `.github/workflows/python-test-adequacy.yml` workflow fails any PR that modifies `src/python-frontend/**` or `src/c2goto/library/python/**` without adding at least one new *passing* and one new *failing* `regression/python/` test (a failing test's directory name ends in `_fail` or `-fail`). The check logic lives in `scripts/ci/check-python-test-pair.sh`. For a PR that legitimately needs no new test (docs-only, pure refactor), apply the **`skip-test-check`** label — the workflow also fires on label changes, so adding it re-runs this check and clears a previously-failed result without re-running the build matrix.
+
 **Before committing:**
 
 - Always run the project's test suite. If tests fail, fix the failures before committing — never commit broken or untested code.
 - **Regression suite cap.** When running the full regression suite, cap the run at **5 minutes** (300000 ms) — pass the timeout to the `Bash` tool's `timeout` parameter, or wrap the invocation with `timeout 5m …`. If the suite cannot complete in 5 minutes, narrow the scope (e.g. run only the affected subset) or ask the user before extending the limit.
-- **Lint and typecheck.** Run lint and typecheckers and fix any errors. For Python code, use `pylint`. For C++ code, ensure clang-format compliance (CI enforces this).
+- **Lint and typecheck.** Run lint and typecheckers and fix any errors. For Python code, use `pylint`. For C++ code, ensure clang-format compliance (CI enforces this). CI runs an errors-only pylint gate (`python-pylint` job) over the `src/python-frontend/**/*.py` files a PR changes, using the config at `.github/pylintrc`; reproduce a single file locally with `pylint -E --rcfile=.github/pylintrc <file>`.
 
 ## Branching
 
