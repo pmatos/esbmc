@@ -1,0 +1,2 @@
+# CPython differential gate opt-out (scripts/check_python_tests.sh, issue #1).
+# Counter.most_common is not modelled in ESBMC (issue #4665); ESBMC reports FAILED while CPython runs cleanly.

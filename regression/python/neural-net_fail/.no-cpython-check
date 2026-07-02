@@ -1,0 +1,2 @@
+# CPython differential gate opt-out (scripts/check_python_tests.sh, issue #1).
+# Depends on a third-party package unavailable to CI CPython.

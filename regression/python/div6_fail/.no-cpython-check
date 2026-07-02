@@ -1,0 +1,2 @@
+# CPython differential gate opt-out (scripts/check_python_tests.sh, issue #1).
+# Uses the random module; ESBMC treats draws as nondet, CPython picks concrete values.

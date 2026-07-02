@@ -1,0 +1,2 @@
+# CPython differential gate opt-out (scripts/check_python_tests.sh, issue #1).
+# ESBMC's expected verdict does not correspond to a CPython exit status here (behaviour depends on ESBMC-specific modelling).

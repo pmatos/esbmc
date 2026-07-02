@@ -10,9 +10,13 @@ You can see below some examples that you can from the build directory:
 - `ctest --progress`. Show testing progress in one line.
 - `ctest -j4 -L python --progress --timeout 30`. Sets a timeout of 30s.
 
-We also provide a script to validate the Python regression suite. You can run the following command from `ESBMC_Project/esbmc` directory as:
+We also provide a script that cross-checks the Python regression suites against real CPython. You can run the following command from the `ESBMC_Project/esbmc` directory:
 
-`./scripts/check_python_tests.sh`
+`./scripts/check_python_tests.sh [query]`
+
+It covers `regression/python`, `regression/python-intensive` and `regression/python-coverage`. For each test it reads the expected verdict from `test.desc` (the authoritative `^VERIFICATION SUCCESSFUL$` / `^VERIFICATION FAILED$` line, **not** the directory name), runs `main.py` under CPython, and requires the exit code to agree: `SUCCESSFUL` must exit 0, `FAILED` must exit non-zero. A trailing `query` argument restricts the run to tests whose directory name contains it (case-insensitive). At the end it prints how many tests were checked versus excluded (broken down by reason), so shrinking coverage is visible rather than silent.
+
+A test is excluded from this check when it cannot be run deterministically under CPython: when `main.py` uses ESBMC intrinsics (`__ESBMC_*`, `__VERIFIER_*`, `nondet_*`), when its directory name contains `nondet` (symbolic input), when `test.desc` is `KNOWNBUG`/`FUTURE` or asserts no verification verdict, or when the directory contains a `.no-cpython-check` marker file. Add a `.no-cpython-check` file (with a one-line reason) to opt a test out explicitly — the reason then lives and is reviewed alongside the test instead of in the script.
 
 See ctest documentation for the list of available commands.
 

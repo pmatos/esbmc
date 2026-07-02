@@ -1,0 +1,2 @@
+# CPython differential gate opt-out (scripts/check_python_tests.sh, issue #1).
+# Exercises ESBMC's Decimal operational model; CPython's decimal semantics differ.

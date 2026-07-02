@@ -1,0 +1,2 @@
+# CPython differential gate opt-out (scripts/check_python_tests.sh, issue #1).
+# Exercises an ESBMC-specific feature/flag not applicable under plain CPython execution.

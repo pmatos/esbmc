@@ -1,0 +1,2 @@
+# CPython differential gate opt-out (scripts/check_python_tests.sh, issue #1).
+# Symbolic-input test; ESBMC's verdict does not map to a single CPython exit status.
