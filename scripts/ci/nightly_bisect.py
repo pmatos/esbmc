@@ -35,12 +35,17 @@ FIRST_BAD = re.compile(r"^([0-9a-f]{7,40}) is the first bad commit", re.MULTILIN
 
 def run_ctest_test(build_dir, test, timeout=None):
     """Run exactly one ctest test by name. True when it passes."""
-    done = subprocess.run(["ctest", "-R", f"^{re.escape(test)}$", "--output-on-failure"],
-                          cwd=build_dir,
-                          check=False,
-                          capture_output=True,
-                          text=True,
-                          timeout=timeout)
+    try:
+        done = subprocess.run(["ctest", "-R", f"^{re.escape(test)}$", "--output-on-failure"],
+                              cwd=build_dir,
+                              check=False,
+                              capture_output=True,
+                              text=True,
+                              timeout=timeout)
+    except subprocess.TimeoutExpired:
+        # A hang is exactly what de-flaking exists to catch -- count it as a
+        # failed run rather than crashing the whole deflake pass.
+        return False
     # ctest exits 0 when its filter matches nothing, and says so on stderr, not
     # stdout. Without this a deleted or misnamed test reads as a pass, gets
     # classified flaky, and is quarantined instead of bisected.

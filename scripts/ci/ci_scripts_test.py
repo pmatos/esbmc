@@ -626,6 +626,7 @@ add_test(NAME always_fails COMMAND sh -c "exit 1")
 # survives between ctest invocations, which is what makes it intermittent.
 add_test(NAME sometimes_passes COMMAND sh -c
          "n=0; [ -f c ] && n=$(cat c); n=$((n+1)); echo $n > c; test $n -eq 2")
+add_test(NAME sleeps COMMAND sh -c "sleep 5")
 """
 
     def setUp(self):
@@ -658,6 +659,9 @@ add_test(NAME sometimes_passes COMMAND sh -c
         # ctest exits 0 when its filter matches no test, which would otherwise
         # read as the test having passed.
         self.assertFalse(bisect.run_ctest_test(self.build, "no_such_test"))
+
+    def test_a_timeout_is_a_failed_run_not_a_crash(self):
+        self.assertFalse(bisect.run_ctest_test(self.build, "sleeps", timeout=1))
 
     def test_flaky_tests_are_quarantined_and_stable_ones_are_not(self):
         quarantine = self.write("q.txt", "# header\nalways_fails\n")
