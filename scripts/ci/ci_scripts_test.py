@@ -851,19 +851,31 @@ class BisectResult(TempRepo):
         self.commit("main", marker="main")
         self.git("merge", "-q", "--no-ff", "-m", "merge", "side", "-X", "ours")
         merge = self.git("rev-parse", "HEAD").strip()
-        action, reason = bisect.classify(self.repo, merge, True)
+        action, reason = bisect.classify(self.repo, merge, 0)
         self.assertEqual(action, "escalate")
         self.assertIn("merge commit", reason)
 
     def test_a_broken_baseline_is_escalated(self):
         sha = self.commit("base")
-        action, reason = bisect.classify(self.repo, sha, False)
+        action, reason = bisect.classify(self.repo, sha, 1)
         self.assertEqual(action, "escalate")
         self.assertIn("baseline is wrong", reason)
 
+    def test_an_unjudgeable_baseline_is_not_reported_as_broken(self):
+        sha = self.commit("base")
+        action, reason = bisect.classify(self.repo, sha, 125)
+        self.assertEqual(action, "escalate")
+        self.assertIn("inconclusive", reason)
+        self.assertNotIn("baseline is wrong", reason)
+
     def test_a_plain_commit_is_reported_as_the_culprit(self):
         sha = self.commit("base")
-        self.assertEqual(bisect.classify(self.repo, sha, True)[0], "culprit")
+        self.assertEqual(bisect.classify(self.repo, sha, 0)[0], "culprit")
+
+    def test_predicate_at_returns_the_raw_exit_code(self):
+        sha = self.commit("base")
+        self.assertEqual(bisect.predicate_at(self.repo, "exit 125", sha), 125)
+        self.assertEqual(bisect.predicate_at(self.repo, "exit 0", sha), 0)
 
 
 class BisectEndToEnd(TempRepo):

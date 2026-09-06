@@ -124,9 +124,18 @@ def parse_first_bad(output):
     return found.group(1) if found else ""
 
 
-def classify(repo, sha, good_is_really_good):
-    """Decide whether a bisect result can be reported as the culprit."""
-    if not good_is_really_good:
+def classify(repo, sha, good_rc):
+    """Decide whether a bisect result can be reported as the culprit.
+
+    ``good_rc`` is the predicate's raw exit code at the "good" commit (0 when
+    verify-good was skipped): 125 means it could not judge that commit at all
+    -- distinct from actually reproducing the failure there.
+    """
+    if good_rc == 125:
+        return "escalate", ("the predicate could not judge the last known-good commit (build "
+                            "failed, or the test does not exist there) -- verify-good is "
+                            "inconclusive")
+    if good_rc != 0:
         return "escalate", ("the failure reproduces on the last known-good commit, so the "
                             "baseline is wrong and the range says nothing")
     if not sha:
@@ -138,13 +147,18 @@ def classify(repo, sha, good_is_really_good):
 
 
 def predicate_at(repo, predicate, sha):
-    """Run the predicate with ``sha`` checked out, then put the tree back."""
+    """Run the predicate with ``sha`` checked out, then put the tree back.
+
+    Returns the raw exit code, not a bool: callers need to tell exit 125
+    ("cannot judge", e.g. an unbuildable or not-yet-existing test) apart from
+    a genuine pass or fail.
+    """
     original = git(repo, "rev-parse", "--abbrev-ref", "HEAD").strip()
     if original == "HEAD":  # detached
         original = git(repo, "rev-parse", "HEAD").strip()
     git(repo, "checkout", "-q", sha)
     try:
-        return subprocess.run(predicate, shell=True, cwd=repo, check=False).returncode == 0
+        return subprocess.run(predicate, shell=True, cwd=repo, check=False).returncode
     finally:
         git(repo, "checkout", "-q", original)
 
@@ -165,10 +179,10 @@ def bisect(args):
     # fails at 'good' too makes every bisect step meaningless. This has to
     # check the commit out -- evaluating it against the current tree would just
     # re-measure 'bad'.
-    good_ok = (predicate_at(args.repo, args.predicate, args.good) if args.verify_good else True)
+    good_rc = (predicate_at(args.repo, args.predicate, args.good) if args.verify_good else 0)
 
     sha, output = "", ""
-    if good_ok:
+    if good_rc == 0:
         git(args.repo, "bisect", "reset", check=False)
         git(args.repo, "bisect", "start", args.bad, args.good)
         done = subprocess.run(["git", "-C", args.repo, "bisect", "run", "sh", "-c",
@@ -180,7 +194,7 @@ def bisect(args):
         sha = parse_first_bad(output)
         git(args.repo, "bisect", "reset", check=False)
 
-    action, reason = classify(args.repo, sha, good_ok)
+    action, reason = classify(args.repo, sha, good_rc)
     report = {
         "schema": SCHEMA,
         "action": action,
